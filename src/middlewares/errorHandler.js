@@ -1,3 +1,11 @@
+import AppError from '../utils/AppError.js';
+
+const handleDuplicateFieldsDB = (err) => {
+  const value = err.keyValue ? JSON.stringify(err.keyValue.email) : '';
+  const message = `Duplicate field value ${value}, please use another value`;
+  return new AppError(message, 400);
+};
+
 // For sending error responses in development environment
 const sendErrorDev = (err, res) => {
   res.status(err.statusCode).json({
@@ -18,14 +26,12 @@ const sendErrorProd = (err, res) => {
     });
   }
   // Programming or unknown error
-  else {
-    console.error('💥 ERROR:', err);
+  console.error('💥 ERROR:', err);
 
-    res.status(500).json({
-      status: 'error',
-      message: 'Something went very wrong!',
-    });
-  }
+  res.status(500).json({
+    status: 'error',
+    message: 'Something went wrong!',
+  });
 };
 
 export default (err, req, res, next) => {
@@ -35,6 +41,8 @@ export default (err, req, res, next) => {
   if (process.env.NODE_ENV === 'development') {
     sendErrorDev(err, res);
   } else {
-    sendErrorProd(err, res);
+    let error = err;
+    if (error.code === 11000) error = handleDuplicateFieldsDB(error);
+    sendErrorProd(error, res);
   }
 };
