@@ -5,26 +5,30 @@ import RefreshToken from '../token/refreshTokenModel.js';
 import Email from '../../utils/emails.js';
 import * as tokenServices from '../token/tokenServices.js';
 
+const filterBody = (obj, ...allowedFields) => {
+  const newObj = {};
+  Object.keys(obj).forEach(el => {
+    if (allowedFields.includes(el)) newObj[el] = obj[el];
+  })
+  return newObj;
+}
+
 /**
  * Signup a new user
  * @param {object} userData
  * @returns {Promise<User>}
  */
 
-export const signupUser = async (userData) => {
+export const signupUser = async (userData, role) => {
   // 1) filter request body
-  const filteredBody = {
-    name: userData.name,
-    email: userData.email,
-    password: userData.password,
-    passwordConfirm: userData.passwordConfirm,
-  };
-
+  const filteredBody = filterBody(userData, 'name', 'email', 'password', 'passwordConfirm')
+  filteredBody.role = role;
   // 2) create user
   const newUser = await User.create(filteredBody);
 
   return newUser;
 };
+
 
 /**
  * Login User
@@ -73,10 +77,10 @@ export const refresh = async (refreshToken) => {
   }
 
   // reuse token
-  if (storedToken.expiresAt < Date.now()) {
+  if (storedToken.expiresAt.getTime() < Date.now() || storedToken.revoked) {
     await tokenServices.revokeTokenFamily(storedToken.familyId);
 
-    throw new AppError('Reused token detected!, Login required', 403);
+    throw new AppError('Token reuse detected!, Login required', 403);
   }
 
   // 3) find user based on token & check it
@@ -92,7 +96,7 @@ export const refresh = async (refreshToken) => {
   }
 
   return {
-    user,
+    user: user._id,
     storedToken,
   };
 };
@@ -105,22 +109,26 @@ export const refresh = async (refreshToken) => {
 export const logoutUser = async (refreshToken) => {
   if (!refreshToken) return;
 
+  // get token & check it
   const storedToken = await RefreshToken.findOne({
     tokenHash: tokenServices.hashToken(refreshToken),
   });
 
   if (!storedToken) return;
 
+  // reuse token, delete it
   if (storedToken.revoked) {
     await tokenServices.revokeTokenFamily(storedToken.familyId);
     return;
   }
 
+  // delete token
   storedToken.revoked = true;
   await storedToken.save();
 };
 
 export const logoutUserFromAllDevices = async (userId) => {
+  // delete all users token
   await RefreshToken.updateMany(
     { user: userId, revoked: false },
     { revoked: true },
@@ -133,17 +141,21 @@ export const logoutUserFromAllDevices = async (userId) => {
  */
 
 export const forgotUserPassword = async (userData) => {
+  // find user based on POSTed email and check it
   const user = await User.findOne({ email: userData.body.email });
-  if (!user) throw new AppError('No user found!', 404);
+  if (!user) return;
 
+  // generate reset token
   const resetToken = user.generatePasswordResetToken();
   await user.save({ validateBeforeSave: false });
 
   try {
+    // send email
     const url = `${userData.protocol}://${userData.get('host')}/api/v1/auth/resetPassword/${resetToken}`;
 
     await new Email(user, url).sendPasswordReset();
   } catch (err) {
+    // reset token & it's expiry date
     console.log(err.message);
     user.passwordResetToken = undefined;
     user.passwordResetExpires = undefined;
@@ -162,14 +174,10 @@ export const forgotUserPassword = async (userData) => {
  */
 
 export const restUserPassword = async (userData) => {
-  // get reset token from params & check it
-  const { resetToken } = userData.params;
-  if (!resetToken) throw new AppError('Please provide token!', 400);
-
   // find user based on token & check it
   const hashedToken = crypto
     .createHash('sha256')
-    .update(resetToken)
+    .update(userData.params.resetToken)
     .digest('hex');
 
   const user = await User.findOne({

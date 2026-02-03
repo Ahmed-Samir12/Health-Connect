@@ -14,6 +14,7 @@ const refreshTokenSchema = new Schema(
       type: String,
       required: true,
       index: true,
+      unique: true,
     },
     familyId: {
       type: String,
@@ -29,6 +30,7 @@ const refreshTokenSchema = new Schema(
       default: false,
     },
     replacedByTokenHash: String,
+    createdByIp: String,
     revokedByIp: String,
     userAgent: String,
   },

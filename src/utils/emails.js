@@ -56,4 +56,15 @@ export default class Email {
       'Your password reset token (valid for only 10 min)',
     );
   }
+
+  async sendDoctorApprove() {
+    await this.send('doctorApprov', 'Your doctor profile has been approved 🎉');
+  }
+
+  async sendDoctorReject() {
+    await this.send(
+      'doctorReject',
+      'Unfortunately, your doctor profile has been rejected 😢',
+    );
+  }
 }

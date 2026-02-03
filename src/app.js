@@ -7,6 +7,9 @@ import cookieParser from 'cookie-parser';
 import AppError from './utils/AppError.js';
 import globalErrorHandler from './middlewares/errorHandler.js';
 import authRouter from './modules/auth/authRoutes.js';
+import doctorRouter from './modules/doctor/doctorRoutes.js';
+import userRouter from './modules/user/userRoutes.js';
+import adminRouter from './modules/admin/adminRoutes.js';
 
 const app = express();
 
@@ -35,6 +38,9 @@ app.use(
 
 // main routes
 app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/users', userRouter);
+app.use('/api/v1/doctors', doctorRouter);
+app.use('/api/v1/admin', adminRouter);
 
 // 404 handler for undefined routes
 app.all('/{*splat}', (req, res, next) => {

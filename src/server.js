@@ -1,3 +1,4 @@
+import './config/env.js';
 // Handle Uncaught Exceptions
 process.on('uncaughtException', (err) => {
   console.error('Uncaught Exception ❌, Shutting down...');
@@ -5,9 +6,6 @@ process.on('uncaughtException', (err) => {
   console.log(err.stack);
   process.exit(1);
 });
-
-// Load Environment Variables
-process.loadEnvFile();
 
 // Import Modules
 import connectDB from './config/db.js';

@@ -25,7 +25,7 @@ export const hashToken = (token) =>
 export const generateFamilyId = () => crypto.randomBytes(32).toString('hex');
 
 // create and send tokens
-export const createSendToken = async (user, statusCode, res) => {
+export const createToken = async (user, ip, userAgent) => {
   // 1) generate access & refresh tokens
   const accessToken = signAccessToken(user);
   const refreshToken = generateRefreshToken();
@@ -39,35 +39,26 @@ export const createSendToken = async (user, statusCode, res) => {
     tokenHash,
     familyId,
     expiresAt,
-  });
-
-  // 3) send refresh token via cookie in httpOnly and access token in responce
-  res.cookie('refreshToken', refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    expires: expiresAt,
-    path: '/api/v1/auth',
+    createdByIp: ip,
+    userAgent,
   });
 
   // remove password from responce
   user.password = undefined;
   user.isActive = undefined;
 
-  res.status(statusCode).json({
-    status: 'success',
+  return {
     accessToken,
-    data: {
-      user,
-    },
-  });
+    refreshToken,
+    expiresAt,
+  };
 };
 
-// for revoke token family
+// for delete token family
 export const revokeTokenFamily = async (familyId) =>
   await RefreshToken.deleteMany({ familyId });
 
-// revoke entire user's token
+// delete entire user's token
 export const revokeTokenUser = async (userId) =>
   await RefreshToken.deleteMany({ user: userId });
 
@@ -81,7 +72,7 @@ export const rotateRefreshToken = async (storedToken, user, ip, userAgent) => {
   storedToken.userAgent = userAgent;
   storedToken.replacedByTokenHash = newRefreshTokenHash;
 
-  storedToken.save();
+  await storedToken.save();
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
   await RefreshToken.create({
@@ -89,6 +80,8 @@ export const rotateRefreshToken = async (storedToken, user, ip, userAgent) => {
     tokenHash: newRefreshTokenHash,
     familyId: storedToken.familyId,
     expiresAt,
+    createdByIp: ip,
+    userAgent,
   });
 
   // create new access token & send new tokens
