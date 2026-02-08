@@ -7,11 +7,11 @@ import * as tokenServices from '../token/tokenServices.js';
 
 const filterBody = (obj, ...allowedFields) => {
   const newObj = {};
-  Object.keys(obj).forEach(el => {
+  Object.keys(obj).forEach((el) => {
     if (allowedFields.includes(el)) newObj[el] = obj[el];
-  })
+  });
   return newObj;
-}
+};
 
 /**
  * Signup a new user
@@ -21,14 +21,19 @@ const filterBody = (obj, ...allowedFields) => {
 
 export const signupUser = async (userData, role) => {
   // 1) filter request body
-  const filteredBody = filterBody(userData, 'name', 'email', 'password', 'passwordConfirm')
+  const filteredBody = filterBody(
+    userData,
+    'name',
+    'email',
+    'password',
+    'passwordConfirm',
+  );
   filteredBody.role = role;
   // 2) create user
   const newUser = await User.create(filteredBody);
 
   return newUser;
 };
-
 
 /**
  * Login User
@@ -187,12 +192,18 @@ export const restUserPassword = async (userData) => {
 
   if (!user) throw new AppError('Token is invalid or has expired!', 400);
 
+  if (!userData.body.password || !userData.body.passwordConfirm) {
+    throw new AppError('Please provide password and passwordConfirm', 400);
+  }
+
   // set new password
   user.password = userData.body.newPassword;
   user.passwordConfirm = userData.body.passwordConfirm;
   user.passwordResetToken = undefined;
   user.passwordResetExpires = undefined;
   await user.save();
+
+  await tokenServices.revokeTokenUser(user._id);
 
   // update passwordChangedAt property
   return { user };

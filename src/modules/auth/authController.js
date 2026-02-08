@@ -118,13 +118,3 @@ export const resetPassword = async (req, res) => {
 
   await sendTokens(user, 200, req, res);
 };
-
-// export const getUsers = async (req, res) => {
-//   const users = await User.find();
-
-//   res.status(200).json({
-//     status: 'success',
-//     results: users.length,
-//     data: { users },
-//   });
-// };

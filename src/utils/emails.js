@@ -10,7 +10,7 @@ const __dirname = path.dirname(__filename);
 export default class Email {
   constructor(user, url) {
     this.to = user.email;
-    this.firstName = user.name.split(' ')[0];
+    this.userName = user.name;
     this.url = url;
     this.from = 'Support <support@health-care.io>';
   }
@@ -28,7 +28,7 @@ export default class Email {
 
   async send(template, subject) {
     const html = pug.renderFile(`${__dirname}/../views/${template}.pug`, {
-      firstName: this.firstName,
+      userName: this.userName,
       url: this.url,
       subject,
     });
@@ -52,18 +52,21 @@ export default class Email {
 
   async sendPasswordReset() {
     await this.send(
-      'passwordReset',
+      'password-reset',
       'Your password reset token (valid for only 10 min)',
     );
   }
 
   async sendDoctorApprove() {
-    await this.send('doctorApprov', 'Your doctor profile has been approved 🎉');
+    await this.send(
+      'doctor-approval',
+      'Your doctor profile has been approved 🎉',
+    );
   }
 
   async sendDoctorReject() {
     await this.send(
-      'doctorReject',
+      'doctor-rejection',
       'Unfortunately, your doctor profile has been rejected 😢',
     );
   }
