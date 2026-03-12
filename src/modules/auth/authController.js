@@ -1,6 +1,5 @@
 import * as tokenServices from '../token/tokenServices.js';
 import * as authServices from './authServices.js';
-import Email from '../../utils/emails.js';
 // import User from '../user/userModel.js';
 // import AppError from '../../utils/AppError.js';
 
@@ -37,11 +36,8 @@ const sendTokens = async (user, statusCode, req, res) => {
 const signupWithRole = (role) => async (req, res, next) => {
   try {
     const newUser = await authServices.signupUser(req.body, role);
-    const url = `${req.protocol}://${req.get('host')}/api/v1/users/me`;
 
     await sendTokens(newUser, 201, req, res);
-
-    await new Email(newUser, url).sendWelcome();
   } catch (err) {
     next(err);
   }
@@ -114,7 +110,7 @@ export const forgotPassword = async (req, res) => {
 };
 
 export const resetPassword = async (req, res) => {
-  const { user } = await authServices.restUserPassword(req);
+  const { user } = await authServices.resetUserPassword(req);
 
   await sendTokens(user, 200, req, res);
 };

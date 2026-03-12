@@ -1,34 +1,22 @@
-doctype html
-html(lang='en')
-    head
-        meta(charset='UTF-8')
-        meta(name='viewport' content='width=device-width, initial-scale=1.0')
-        meta(http-equiv='X-UA-Compatible' content='IE=edge')
-        title Doctor Account Approved
+extends baseEmail
 
-        include _style
+block content
+    .email-container
+        h2.email-header Congratulations, Dr. #{userName}! 🎉
 
-    body
-        .email-container
-            h2.email-header Congratulations, Dr. #{userName}! 🎉
+        p.email-content Your doctor account has been approved and is now active!
 
-            p.email-content Your doctor account has been approved and is now active!
+        .success-notice
+            p You can now start accepting appointments and managing your schedule.
 
-            .success-notice
-                p You can now start accepting appointments and managing your schedule.
+        .info-box
+            h3 Next Steps:
+            ul
+                li Complete your professional profile
+                li Set your availability schedule
+                li Review appointment requests
+                li Update your consultation fees
 
-            .info-box
-                h3 Next Steps:
-                ul
-                    li Complete your professional profile
-                    li Set your availability schedule
-                    li Review appointment requests
-                    li Update your consultation fees
+        .button-container
+            a.dashboard-button(href=url) Go to Doctor Dashboard
 
-            .button-container
-                a.dashboard-button(href=dashboardURL) Go to Doctor Dashboard
-
-            p.email-footer
-                | Best regards,
-                br
-                | Healthcare Team

@@ -1,6 +1,6 @@
 import Doctor from '../doctor/doctorModel.js';
 import AppError from '../../utils/AppError.js';
-import Email from '../../utils/emails.js';
+import { EmailServices } from '../../utils/emails.js';
 import * as doctorServices from '../doctor/doctorServices.js';
 
 /**
@@ -23,11 +23,9 @@ export const approveDoctor = async (doctorId) => {
   doctor.rejectionReason = undefined;
   await doctor.save();
 
-  try {
-    await new Email(doctor.user, '').sendDoctorApprove();
-  } catch (err) {
-    console.log(err);
-  }
+  const url = `${process.env.FRONTEND_URL}/api/v1/doctors/me`;
+
+  await new EmailServices(doctor.user, url).sendDoctorApproval();
 
   return { doctor };
 };
@@ -50,11 +48,7 @@ export const rejectDoctor = async (doctorId, reason) => {
   doctor.rejectionReason = reason;
   await doctor.save();
 
-  try {
-    await new Email(doctor.user, '').sendDoctorReject();
-  } catch (err) {
-    console.log(err);
-  }
+  await new EmailServices(doctor.user, '').sendDoctorReject();
 
   return { doctor };
 };

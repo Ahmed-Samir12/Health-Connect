@@ -1,73 +1,83 @@
 import { fileURLToPath } from 'url';
 import path from 'path';
-import nodemailer from 'nodemailer';
 import pug from 'pug';
 import { htmlToText } from 'html-to-text';
+import { Resend } from 'resend';
+import AppError from './AppError.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export default class Email {
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+export class EmailServices {
   constructor(user, url) {
     this.to = user.email;
     this.userName = user.name;
     this.url = url;
-    this.from = 'Support <support@health-care.io>';
+    this.from = process.env.EMAIL_FROM || 'Healthcare <noreply@resend.dev>';
   }
 
-  newTransporter() {
-    return nodemailer.createTransport({
-      host: process.env.EMAIL_HOST,
-      port: process.env.EMAIL_PORT,
-      auth: {
-        user: process.env.EMAIL_USERNAME,
-        pass: process.env.EMAIL_PASSWORD,
-      },
-    });
-  }
-
-  async send(template, subject) {
+  async sendEmail({ subject, template }) {
     const html = pug.renderFile(`${__dirname}/../views/${template}.pug`, {
       userName: this.userName,
       url: this.url,
       subject,
     });
 
-    const mailOptions = {
-      from: this.from,
-      to: this.to,
-      subject,
-      html,
-      text: htmlToText(html, {
-        wordwrap: 130,
-      }),
-    };
-
-    await this.newTransporter().sendMail(mailOptions);
+    try {
+      await resend.emails.send({
+        from: this.from,
+        to: this.to,
+        subject,
+        html,
+        text: htmlToText(html),
+      });
+    } catch (err) {
+      console.log('Email failed: ', err.message);
+      throw new AppError('Faild to send email', 500);
+    }
   }
 
-  async sendWelcome() {
-    await this.send('welcome', 'Welcome to Health-Care 🎉');
+  sendEmailVerification() {
+    return this.sendEmail({
+      subject: 'Email Verification',
+      template: 'email-verification',
+    });
   }
 
-  async sendPasswordReset() {
-    await this.send(
-      'password-reset',
-      'Your password reset token (valid for only 10 min)',
-    );
+  sendWelcomeEmail() {
+    return this.sendEmail({
+      subject: 'Welcome to Health-Care Family',
+      template: 'welcome',
+    });
   }
 
-  async sendDoctorApprove() {
-    await this.send(
-      'doctor-approval',
-      'Your doctor profile has been approved 🎉',
-    );
+  sendPasswordRest() {
+    return this.sendEmail({
+      subject: 'Your password reset token',
+      template: 'password-reset',
+    });
   }
 
-  async sendDoctorReject() {
-    await this.send(
-      'doctor-rejection',
-      'Unfortunately, your doctor profile has been rejected 😢',
-    );
+  sendPasswordResetSuccess() {
+    return this.sendEmail({
+      subject: 'Your password has successfully reset',
+      template: 'password-reset-success',
+    });
+  }
+
+  sendDoctorApproval() {
+    return this.sendEmail({
+      subject: 'Your doctor profile has been approved',
+      template: 'doctor-approval',
+    });
+  }
+
+  sendDoctorReject() {
+    return this.sendEmail({
+      subject: 'Your doctor profile rejected',
+      template: 'doctor-rejection',
+    });
   }
 }

@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import AppError from '../../utils/AppError.js';
 import User from '../user/userModel.js';
 import RefreshToken from '../token/refreshTokenModel.js';
-import Email from '../../utils/emails.js';
+import { EmailServices } from '../../utils/emails.js';
 import * as tokenServices from '../token/tokenServices.js';
 
 const filterBody = (obj, ...allowedFields) => {
@@ -31,6 +31,10 @@ export const signupUser = async (userData, role) => {
   filteredBody.role = role;
   // 2) create user
   const newUser = await User.create(filteredBody);
+
+  const url = `${process.env.FRONTEND_URL}/api/v1/auth/email-verification`;
+
+  await new EmailServices(newUser, url).sendEmailVerification();
 
   return newUser;
 };
@@ -156,11 +160,11 @@ export const forgotUserPassword = async (userData) => {
 
   try {
     // send email
-    const url = `${userData.protocol}://${userData.get('host')}/api/v1/auth/resetPassword/${resetToken}`;
+    const url = `${process.env.FRONTEND_URL}/api/v1/auth/resetPassword/${resetToken}`;
 
-    await new Email(user, url).sendPasswordReset();
+    await new EmailServices(user, url).sendPasswordRest();
   } catch (err) {
-    // reset token & it's expiry date
+    // reset token & it's expired
     console.log(err.message);
     user.passwordResetToken = undefined;
     user.passwordResetExpires = undefined;
@@ -178,7 +182,7 @@ export const forgotUserPassword = async (userData) => {
  * @param { object } userData
  */
 
-export const restUserPassword = async (userData) => {
+export const resetUserPassword = async (userData) => {
   // find user based on token & check it
   const hashedToken = crypto
     .createHash('sha256')
@@ -192,7 +196,7 @@ export const restUserPassword = async (userData) => {
 
   if (!user) throw new AppError('Token is invalid or has expired!', 400);
 
-  if (!userData.body.password || !userData.body.passwordConfirm) {
+  if (!userData.body.newPassword || !userData.body.passwordConfirm) {
     throw new AppError('Please provide password and passwordConfirm', 400);
   }
 
@@ -206,5 +210,10 @@ export const restUserPassword = async (userData) => {
   await tokenServices.revokeTokenUser(user._id);
 
   // update passwordChangedAt property
+
+  const url = `${process.env.FRONTEND_URL}/api/v1/users/me`;
+
+  await new EmailServices(user, url).sendPasswordResetSuccess();
+
   return { user };
 };

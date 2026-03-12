@@ -1,35 +1,22 @@
-doctype html
-html(lang='en')
-    head
-        meta(charset='UTF-8')
-        meta(name='viewport' content='width=device-width, initial-scale=1.0')
-        meta(http-equiv='X-UA-Compatible' content='IE=edge')
-        title Email Verification
+extends baseEmail
 
-        include _style
+block content
+    .email-container
+        h2.email-header Welcome to Healthcare System, #{userName}! 👋
 
-    body
-        .email-container
-            h2.email-header Welcome to Healthcare System, #{userName}! 👋
+        p.email-content Thanks for signing up! Please verify your email address to activate your account.
 
-            p.email-content Thanks for signing up! Please verify your email address to activate your account.
+        .button-container
+            a.button(href=url) Verify Email Address
 
-            .button-container
-                a.button(href=url) Verify Email Address
+        p.copy-link-section
+            | Or copy and paste this link into your browser:
+            br
+            a(href=url)= url 
 
-            p.copy-link-section
-                | Or copy and paste this link into your browser:
-                br
-                a(href=url)= url 
-
-            .security-notice
-                p
-                    strong ⚠️ Security Notice:
-                ul
-                    li This link expires in #[strong 24 hours]
-                    li If you didn't create an account, ignore this email
-
-            p.email-footer
-                | Best regards,
-                br
-                | Healthcare Team
+        .security-notice
+            p
+                strong ⚠️ Security Notice:
+            ul
+                li This link expires in #[strong 24 hours]
+                li If you didn't create an account, ignore this email

@@ -1,40 +1,28 @@
-doctype html
-html(lang='en')
-    head
-        meta(charset='UTF-8')
-        meta(name='viewport' content='width=device-width, initial-scale=1.0')
-        meta(http-equiv='X-UA-Compatible' content='IE=edge')
-        title Doctor Account Application Update
+extends baseEmail
 
-        include _style
+block content
+    .email-container
+        h2.email-header Application Status Update
 
-    body
-        .email-container
-            h2.email-header Application Status Update
+        p.email-content Dear Dr. #{userName},
 
-            p.email-content Dear Dr. #{userName},
+        p.email-content Thank you for your interest in joining our healthcare platform.
 
-            p.email-content Thank you for your interest in joining our healthcare platform.
+        .security-notice
+            p
+                strong Application Status:
+            p After careful review, we regret to inform you that we are unable to approve your doctor account application at this time.
 
-            .security-notice
-                p
-                    strong Application Status:
-                p After careful review, we regret to inform you that we are unable to approve your doctor account application at this time.
+        .info-box
+            h3 Common reasons for rejection:
+            ul
+                li Incomplete or missing credentials
+                li Documentation does not meet requirements
+                li License verification issues
+                li Insufficient professional information
 
-            .info-box
-                h3 Common reasons for rejection:
-                ul
-                    li Incomplete or missing credentials
-                    li Documentation does not meet requirements
-                    li License verification issues
-                    li Insufficient professional information
+        p.email-content If you believe this was an error or would like to reapply with updated information, please contact our support team.
 
-            p.email-content If you believe this was an error or would like to reapply with updated information, please contact our support team.
+        .button-container
+            a.button(href=url) Contact Support
 
-            .button-container
-                a.button(href=supportURL) Contact Support
-
-            p.email-footer
-                | Best regards,
-                br
-                | Healthcare Team
